@@ -1,0 +1,39 @@
+@Task6_HostAddress = http://localhost:5039
+
+GET http://localhost:5039/api/meeting
+Accept: application/json
+
+###
+POST http://localhost:5039/api/meeting
+Content-Type: application/json
+
+{
+  "Title": "Team Sync",
+  "Description": "Daily standup meeting",
+  "StartTime": "2026-07-08T10:00:00"
+}
+###
+GET http://localhost:5039/api/meeting/bydate
+Accept: application/json
+###
+GET http://localhost:5039/api/meeting/byword?word=Daily
+Accept: application/json
+###
+GET http://localhost:5039/api/meeting/bytime?start=2026-07-05&end=2026-10-28
+Accept: application/json
+###
+PUT http://localhost:5039/api/meeting/1
+Content-Type: application/json
+
+{
+      "Title": "Team Sync",
+      "Description": "Daily standup meeting",
+      "StartTime": "2026-07-08T10:00:00"
+}
+###
+DELETE http://localhost:5039/api/meeting/51
+Accept: application/json
+###
+GET http://localhost:5039/api/meeting/51
+Accept: application/json
+###
