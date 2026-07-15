@@ -1,14 +1,10 @@
 ﻿namespace Task6.Models;
 
-public class Meeting
+public class Participant
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-    public string? Description { get; set; } 
-    public DateTime StartTime { get; set; }
-    
-    public int? RoomId { get; set; }
-    public Room? Room { get; set; }
-
+    public string? Email { get; set; }
     public IEnumerable<MeetingParticipants> MeetingParticipants { get; set; }  = new List<MeetingParticipants>();
+
 }

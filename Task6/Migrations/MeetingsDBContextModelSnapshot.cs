@@ -37,12 +37,112 @@ namespace Task6.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("RoomId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RoomId");
+
                     b.ToTable("Meetings");
+                });
+
+            modelBuilder.Entity("Task6.Models.MeetingParticipants", b =>
+                {
+                    b.Property<int>("MeetingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ParticipantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MeetingId", "ParticipantId");
+
+                    b.HasIndex("ParticipantId");
+
+                    b.ToTable("MeetingParticipants");
+                });
+
+            modelBuilder.Entity("Task6.Models.Participant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Participants");
+                });
+
+            modelBuilder.Entity("Task6.Models.Room", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Task6.Models.Meeting", b =>
+                {
+                    b.HasOne("Task6.Models.Room", "Room")
+                        .WithMany("Meetings")
+                        .HasForeignKey("RoomId");
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Task6.Models.MeetingParticipants", b =>
+                {
+                    b.HasOne("Task6.Models.Meeting", "Meeting")
+                        .WithMany("MeetingParticipants")
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Task6.Models.Participant", "Participant")
+                        .WithMany("MeetingParticipants")
+                        .HasForeignKey("ParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meeting");
+
+                    b.Navigation("Participant");
+                });
+
+            modelBuilder.Entity("Task6.Models.Meeting", b =>
+                {
+                    b.Navigation("MeetingParticipants");
+                });
+
+            modelBuilder.Entity("Task6.Models.Participant", b =>
+                {
+                    b.Navigation("MeetingParticipants");
+                });
+
+            modelBuilder.Entity("Task6.Models.Room", b =>
+                {
+                    b.Navigation("Meetings");
                 });
 #pragma warning restore 612, 618
         }
