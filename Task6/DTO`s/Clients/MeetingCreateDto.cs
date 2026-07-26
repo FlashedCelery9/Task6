@@ -1,14 +1,12 @@
 ﻿using Task6.Models;
+
 namespace Task6.DTO_s.Clients;
-using Task6.DTO_s.ParticipantsDto;
 
 
-public class MeetingDetail
+public class MeetingCreateDto
 {
-    public int Id { get; set; }
+    public List<Participant> Participants { get; set; }
     public string Title { get; set; } = null!;
     public string Description { get; set; } = null!;
     public DateTime StartTime { get; set; }
-    public Room? Room { get; set; }
-    public List<ParticipantDto>? Participant { get; set; }
 }
