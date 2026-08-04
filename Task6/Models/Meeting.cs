@@ -3,12 +3,12 @@
 public class Meeting
 {
     public int Id { get; set; }
-    public string Name { get; set; } = null!;
+    public string Title { get; set; } = null!;
     public string? Description { get; set; } 
     public DateTime StartTime { get; set; }
     
     public int? RoomId { get; set; }
     public Room? Room { get; set; }
 
-    public IEnumerable<MeetingParticipants> MeetingParticipants { get; set; }  = new List<MeetingParticipants>();
+    public ICollection<MeetingParticipants> MeetingParticipants { get; set; }  = new List<MeetingParticipants>();
 }

@@ -159,3 +159,9 @@ D:\Rider\Task6\Task6\obj\Debug\net10.0\ref\Task6.dll
 D:\Rider\Task6\Task6\bin\Debug\net10.0\AutoMapper.dll
 D:\Rider\Task6\Task6\bin\Debug\net10.0\Bogus.dll
 D:\Rider\Task6\Task6\obj\Debug\net10.0\Task6.sourcelink.json
+D:\Rider\Task6\Task6\bin\Debug\net10.0\Task6.xml
+D:\Rider\Task6\Task6\bin\Debug\net10.0\Swashbuckle.AspNetCore.Annotations.dll
+D:\Rider\Task6\Task6\bin\Debug\net10.0\Swashbuckle.AspNetCore.Swagger.dll
+D:\Rider\Task6\Task6\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+D:\Rider\Task6\Task6\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+D:\Rider\Task6\Task6\obj\Debug\net10.0\Task6.xml

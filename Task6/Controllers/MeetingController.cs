@@ -22,8 +22,13 @@ public class MeetingController : ControllerBase
         _mapper = mapper;
 
     }
-
+    /// <summary>
+    /// Get all DetailMeetings
+    /// </summary>
+    /// <returns>List of meetings</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(List<MeetingTitle>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMeetings()
     {
         var meetings = await _context.Meetings
@@ -31,17 +36,32 @@ public class MeetingController : ControllerBase
             .ToListAsync();
         return Ok(meetings);
     }
-
+    /// <summary>
+    /// Create a Meeting
+    /// </summary>
+    /// <param name="meetingCreate">MeetingCreateDto obj</param>
+    /// <returns>Created meeting</returns>
     [HttpPost]
-    public async Task<MeetingTitle> setMeeting(MeetingCreateProfile meetingCreateProfile)
-    {
-        var client = _mapper.Map<Meeting>(meetingCreateProfile);
-        _context.Add(client);
-        await _context.SaveChangesAsync();
-        return _mapper.Map<MeetingTitle>(client);
-    }
+    [Consumes("application/json")]
+    [ProducesResponseType<IEnumerable<MeetingTitle>>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
+    public async Task<MeetingTitle> CreateMeeting(MeetingCreateDto meetingCreate)
+    {
+        var meeting = _mapper.Map<Meeting>(meetingCreate);
+        _context.Add(meeting);
+        await _context.SaveChangesAsync();
+        return _mapper.Map<MeetingTitle>(meeting);
+    }
+    /// <summary>
+    /// Get sorted meetings by date
+    /// </summary>
+    /// <returns>List of meetings</returns>
     [HttpGet("bydate")]
+    [ProducesResponseType(typeof(IEnumerable<MeetingTitle>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+
     public async Task<IActionResult> GetMeetingsByDate()
     {
         var result = await _context.Meetings.OrderBy(m => m.StartTime)
@@ -50,7 +70,16 @@ public class MeetingController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Get meetings by word in description
+    /// </summary>
+    /// <param name="word">word of description</param>
+    /// <returns></returns>
     [HttpGet("byword")]
+    [ProducesResponseType(typeof(IEnumerable<MeetingTitle>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+
     public async Task<IActionResult> GetMeetingsByWord([FromQuery] string word)
     {
         if (string.IsNullOrWhiteSpace(word))
@@ -67,7 +96,16 @@ public class MeetingController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Get meetings by timeline
+    /// </summary>
+    /// <param name="start">Start time (from)</param>
+    /// <param name="end">End time (to)</param>
+    /// <returns>List of meetings</returns>
     [HttpGet("bytime")]
+    [ProducesResponseType<IEnumerable<MeetingDetail>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetMeetingsByTime([FromQuery] string start, string end)
     {
         DateTime Starttime = DateTime.Parse(start);
@@ -82,9 +120,19 @@ public class MeetingController : ControllerBase
         
         return Ok(result);
     }
-
+    /// <summary>
+    /// Update meeting
+    /// </summary>
+    /// <param name="id">id of movie</param>
+    /// <param name="meetingCreateProfile">MeetingCreateDto type obj</param>
+    /// <returns></returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateMeeting(int id, [FromBody] MeetingCreateProfile meetingCreateProfile)
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    
+
+    public async Task<IActionResult> UpdateMeeting(int id, [FromBody] MeetingCreateDto meetingCreateProfile)
     {
         var meeting = _context.Meetings.Where(m => m.Id == id).FirstOrDefault();
         if (meeting == null)
@@ -93,12 +141,19 @@ public class MeetingController : ControllerBase
         }
         meeting.StartTime = meetingCreateProfile.StartTime;
         meeting.Description = meetingCreateProfile.Description;
-        meeting.Name = meetingCreateProfile.Title;
+        meeting.Title = meetingCreateProfile.Title;
         await  _context.SaveChangesAsync();
         return Ok(meeting);
     }
-
+    /// <summary>
+    /// Delete movie
+    /// </summary>
+    /// <param name="id">id of movie</param>
+    /// <returns>Deleted movie</returns>
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+
     public async Task<IActionResult> DeleteMeeting(int id)
     {
         var meet = await _context.Meetings.FindAsync(id);
@@ -112,8 +167,14 @@ public class MeetingController : ControllerBase
         return Ok(meet);
 
     }
-
+    /// <summary>
+    /// Get meeting
+    /// </summary>
+    /// <param name="id">id of meeting</param>
+    /// <returns>meeting obj</returns>
     [HttpGet("{id}")]
+    [ProducesResponseType<IEnumerable<MeetingTitle>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMeeting(int id)
     {
         var meet = await _context.Meetings.FindAsync(id);

@@ -12,7 +12,7 @@ public class SeedsData
         if (context.Meetings.Any()) return;
 
         var faker = new Faker<Meeting>()
-                .RuleFor(m => m.Name, f => f.Commerce.ProductName())
+                .RuleFor(m => m.Title, f => f.Commerce.ProductName())
                 .RuleFor(m => m.Description, f => f.Lorem.Sentence())
                 .RuleFor(m => m.StartTime, f => f.Date.Future()) // правильний DateTime
             ;

@@ -4,6 +4,5 @@ public class Room
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-    public IEnumerable<Meeting> Meetings { get; set; } = new List<Meeting>();
-    
+    public ICollection<Meeting> Meetings { get; set; } = new List<Meeting>();
 }
