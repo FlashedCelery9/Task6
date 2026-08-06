@@ -11,6 +11,7 @@ public class MeetingMappingPforile : Profile
     {
         CreateMap<Meeting, MeetingDetail>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title));
+        CreateMap<MeetingParticipants, ParticipantDto>();
         CreateMap<Meeting, MeetingTitle>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title)); ;
         CreateMap<Meeting, MeetingCreateProfile>()

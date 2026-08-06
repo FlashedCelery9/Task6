@@ -4,7 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Task6.data;
 using Task6.DTO_s.Clients;
+using Task6.Helpers.Pagination;
+using Task6.Helpers.Queryable;
+using Task6.Helpers.QueryParameters;
 using Task6.Models;
+
 
 namespace Task6.Controllers;
 [ApiController]
@@ -29,12 +33,13 @@ public class MeetingController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(List<MeetingTitle>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMeetings()
+    public async Task<IActionResult> GetMeetings([FromQuery] MeetingQueryParameters qp)
     {
-        var meetings = await _context.Meetings
-            .ProjectTo<MeetingDetail>(_mapper.ConfigurationProvider)
-            .ToListAsync();
-        return Ok(meetings);
+        var query =  _context.Meetings.AsNoTracking()
+            .ApplyFilters(qp)
+            .ApplySort(qp);
+        var dto = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, _mapper.ConfigurationProvider);
+        return Ok(dto);
     }
     /// <summary>
     /// Create a Meeting
@@ -62,12 +67,13 @@ public class MeetingController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
-    public async Task<IActionResult> GetMeetingsByDate()
+    public async Task<IActionResult> GetMeetingsByDate(MeetingQueryParameters qp)
     {
-        var result = await _context.Meetings.OrderBy(m => m.StartTime)
-            .ProjectTo<MeetingTitle>(_mapper.ConfigurationProvider)
-            .ToListAsync();
-        return Ok(result);
+        var query =  _context.Meetings.AsNoTracking()
+            .ApplyFilters(qp)
+            .ApplySort(qp);
+        var dto = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, _mapper.ConfigurationProvider);
+        return Ok(dto);
     }
 
     /// <summary>
