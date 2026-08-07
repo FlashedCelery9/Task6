@@ -10,7 +10,15 @@ public class MeetingMappingPforile : Profile
     public MeetingMappingPforile()
     {
         CreateMap<Meeting, MeetingDetail>()
-            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title));
+            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
+            .ForMember(dest => dest.MeetingParticipants, opt => opt
+                .MapFrom(src => src.MeetingParticipants
+                .Select(mp => new ParticipantDto
+                {
+                    Name = mp.Participant.Name,
+                    Id = mp.ParticipantId
+                })
+                ));
         CreateMap<MeetingParticipants, ParticipantDto>();
         CreateMap<Meeting, MeetingTitle>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title)); ;

@@ -8,6 +8,14 @@ public class ParticipantProfile : Profile
 {
     public ParticipantProfile()
     {
-        CreateMap<Participant, ParticipantDto>();
+        CreateMap<Participant, ParticipantDto>()
+            .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
+            .ForMember(d => d.Name, opt => opt.MapFrom(s => s.Name));
+        CreateMap<ParticipantDto, Participant>();
+
+        CreateMap<Participant, ParticipantCreateDto>()
+            .ForMember(d => d.MeetingsId, opt => opt.MapFrom(s => s.MeetingParticipants.Select(mp => mp.MeetingId).ToList()));
+        
+        
     }
 }

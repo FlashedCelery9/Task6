@@ -10,30 +10,42 @@ public static class MeetingQueryableExtension
 {
     public static IQueryable<Meeting> ApplyFilters(this IQueryable<Meeting> query, MeetingQueryParameters parameters)
     {
-        if (parameters.StartTime != null && parameters.EndTime == null)
+        // Фільтр: тільки StartTime
+        if (!string.IsNullOrWhiteSpace(parameters.StartTime) &&
+            string.IsNullOrWhiteSpace(parameters.EndTime))
         {
-            query = query.Where(m => m.StartTime.Date == parameters.StartTime);
+            DateTime startTime = DateTime.Parse(parameters.StartTime);
+            query = query.Where(m => m.StartTime.Date == startTime.Date);
         }
-        if (parameters.Search_word != null)
+
+        // Фільтр: пошук по слову
+        if (!string.IsNullOrWhiteSpace(parameters.Search_word))
         {
+            string word = parameters.Search_word.ToLower();
             query = query.Where(m => m.Description != null &&
-                             m.Description.ToLower().Contains(parameters.Search_word));
-            
+                                     m.Description.ToLower().Contains(word));
         }
 
-        if (!parameters.StartTime.Equals(null) && !parameters.EndTime.Equals(null))
+        // Фільтр: StartTime + EndTime
+        if (!string.IsNullOrWhiteSpace(parameters.StartTime) &&
+            !string.IsNullOrWhiteSpace(parameters.EndTime))
         {
-            if (parameters.StartTime < parameters.EndTime)
+            DateTime startTime = DateTime.Parse(parameters.StartTime);
+            DateTime endTime = DateTime.Parse(parameters.EndTime);
+
+            if (startTime > endTime)
             {
-                return null;
+                // ❗ Повертаємо порожній набір, але НЕ null і НЕ весь список
+                return query.Where(m => false);
             }
-            query = query.Where(m => m.StartTime >= parameters.StartTime && m.StartTime <= parameters.EndTime);
-            
+
+            query = query.Where(m => m.StartTime >= startTime &&
+                                     m.StartTime <= endTime);
         }
 
-       return query;
-        
+        return query;
     }
+
     
     public static IQueryable<Meeting> ApplySort(this IQueryable<Meeting> query, MeetingQueryParameters parameters){
      

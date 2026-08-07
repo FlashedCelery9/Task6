@@ -1,15 +1,17 @@
-﻿using Task6.DTO_s.ParticipantsDto;
-using Task6.Models;
+﻿using Task6.Models;
 
 namespace Task6.DTO_s.Clients;
 
-
-public class MeetingCreateDto
+public class MeetingUpdateDto
 {
+    /// <summary>
+    /// Meetings id
+    /// </summary>
+    public int Id { get; set; }
     /// <summary>
     /// Meetings Participants list
     /// </summary>
-    public List<int>? ParticipantsId { get; set; }
+    public ICollection<MeetingParticipants>? MeetingParticipants { get; set; }
     
     /// <summary>
     /// Meetings title
@@ -25,5 +27,4 @@ public class MeetingCreateDto
     /// Meetings start time
     /// </summary>
     public DateTime StartTime { get; set; }
-    
 }
