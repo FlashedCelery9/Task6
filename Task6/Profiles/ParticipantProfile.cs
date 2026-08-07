@@ -14,7 +14,9 @@ public class ParticipantProfile : Profile
         CreateMap<ParticipantDto, Participant>();
 
         CreateMap<Participant, ParticipantCreateDto>()
-            .ForMember(d => d.MeetingsId, opt => opt.MapFrom(s => s.MeetingParticipants.Select(mp => mp.MeetingId).ToList()));
+            .ForMember(d => d.MeetingsId, opt => opt
+                .MapFrom(s => s
+                    .MeetingParticipants.Select(mp => mp.MeetingId).ToList()));
         
         
     }

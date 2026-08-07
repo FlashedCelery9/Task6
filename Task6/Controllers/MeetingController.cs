@@ -58,8 +58,11 @@ public class MeetingController : ControllerBase
         meeting.Title =  meetingCreate.Title;
         meeting.Description =  meetingCreate.Description;
         meeting.StartTime = meetingCreate.StartTime;
-        _context.Add(meeting);
+        
+        _context.Meetings.Add(meeting);
+    
         await _context.SaveChangesAsync();
+      
         if (meetingCreate.ParticipantsId.Count > 0)
         {
             foreach (var id in meetingCreate.ParticipantsId)
@@ -69,7 +72,10 @@ public class MeetingController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
-        return _mapper.Map<MeetingDetail>(_context.Meetings.FirstOrDefault(m => m.Id == meeting.Id));
+        var final_meeting = await _context.Meetings.Include(m => m.MeetingParticipants)
+            .ThenInclude(mp => mp.Participant)
+            .FirstOrDefaultAsync(m => m.Id == meeting.Id);
+        return _mapper.Map<MeetingDetail>(final_meeting);
     }
     /// <summary>
     /// Get sorted meetings by date
