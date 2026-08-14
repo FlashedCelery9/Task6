@@ -9,6 +9,7 @@ using Task6.Helpers.Pagination;
 using Task6.Helpers.Queryable;
 using Task6.Helpers.QueryParameters;
 using Task6.Models;
+using Task6.Services;
 
 
 namespace Task6.Controllers;
@@ -18,30 +19,33 @@ namespace Task6.Controllers;
 public class MeetingController : ControllerBase
 {
     private readonly MeetingsDBContext _context;
+    private readonly IMeetingService _meetingService;
     private readonly IMapper _mapper;
 
     
-    public MeetingController(MeetingsDBContext context, IMapper mapper)
+    public MeetingController(IMeetingService meetingService)
     {
-        _context = context;
-        _mapper = mapper;
+        _meetingService = meetingService;
 
     }
+
     /// <summary>
     /// Get all DetailMeetings
     /// </summary>
     /// <returns>List of meetings</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(List<MeetingTitle>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<MeetingDetail>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMeetings([FromQuery] MeetingQueryParameters qp)
+    public async Task<IActionResult>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp)
     {
-        var query =  _context.Meetings.AsNoTracking()
-            .ApplyFilters(qp)
-            .ApplySort(qp);
-        var dto = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, _mapper.ConfigurationProvider);
+        var dto = await _meetingService.GetMeetingsAsync(qp);
+        if (dto == null)
+        {
+            return NotFound();
+        }
         return Ok(dto);
     }
+    
     /// <summary>
     /// Create a Meeting
     /// </summary>
@@ -54,29 +58,10 @@ public class MeetingController : ControllerBase
 
     public async Task<MeetingDetail> CreateMeeting([FromBody]MeetingCreateDto meetingCreate)
     {
-        var meeting = new Meeting();
-        meeting.Title =  meetingCreate.Title;
-        meeting.Description =  meetingCreate.Description;
-        meeting.StartTime = meetingCreate.StartTime;
-        
-        _context.Meetings.Add(meeting);
-    
-        await _context.SaveChangesAsync();
-      
-        if (meetingCreate.ParticipantsId.Count > 0)
-        {
-            foreach (var id in meetingCreate.ParticipantsId)
-            {
-               _context.MeetingParticipants.Add(new MeetingParticipants{MeetingId = meeting.Id, ParticipantId = id});
-            }
-        }
-
-        await _context.SaveChangesAsync();
-        var final_meeting = await _context.Meetings.Include(m => m.MeetingParticipants)
-            .ThenInclude(mp => mp.Participant)
-            .FirstOrDefaultAsync(m => m.Id == meeting.Id);
-        return _mapper.Map<MeetingDetail>(final_meeting);
+        var final_meeting = await _meetingService.CreateMeetingAsync(meetingCreate);
+        return final_meeting;
     }
+    
     /// <summary>
     /// Get sorted meetings by date
     /// </summary>
@@ -92,10 +77,8 @@ public class MeetingController : ControllerBase
         qp.Sort = "start_time_desc";
         qp.Page = page;
         qp.Size = size;
-        var query =  _context.Meetings.AsNoTracking()
-            .ApplyFilters(qp)
-            .ApplySort(qp);
-        var dto = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, _mapper.ConfigurationProvider);
+        
+        var dto = await _meetingService.GetMeetingsByDateAsync(qp); 
         return Ok(dto);
     }
 
@@ -120,11 +103,7 @@ public class MeetingController : ControllerBase
         qp.Size = size;
         qp.Search_word = word;
 
-        var result = _context.Meetings
-            .ApplyFilters(qp)
-            .ApplySort(qp);
-        
-        var dto = await result.ToPagedResultAsync<Meeting, MeetingTitle>(qp.Page, qp.Size, _mapper.ConfigurationProvider);
+        var dto = _meetingService.GetMeetingsByWordAsync(qp);
 
         return Ok(dto);
     }
@@ -141,23 +120,17 @@ public class MeetingController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetMeetingsByTime(string start, string end, int page, int size)
     {
-       
-        
-        
         MeetingQueryParameters qp = new MeetingQueryParameters();
         qp.Page = page;
         qp.Size = size;
         qp.StartTime = start;
         qp.EndTime = end;
-        var result = _context.Meetings
-            .ApplyFilters(qp)
-            .ApplySort(qp);
-        
-        var dto = await result.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, _mapper.ConfigurationProvider);
-            
+
+        var dto = _meetingService.GetMeetingsByDateAsync(qp);
         
         return Ok(dto);
     }
+
     /// <summary>
     /// Update meeting
     /// </summary>
@@ -168,23 +141,20 @@ public class MeetingController : ControllerBase
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    
 
-    public async Task<IActionResult> UpdateMeeting(MeetingUpdateDto meetingCreateProfile)
+
+    public async Task<IActionResult> UpdateMeeting([FromRoute] int id, [FromBody] MeetingUpdateDto meetingCreateProfile)
     {
-        var meeting = _context.Meetings.Where(m => m.Id == meetingCreateProfile.Id).FirstOrDefault();
-        if (meeting == null)
+        var dto = await _meetingService.UpdateMeetingAsync(id, meetingCreateProfile);
+        if (dto == null)
         {
             return NotFound();
         }
-        meeting.StartTime = meetingCreateProfile.StartTime;
-        meeting.Description = meetingCreateProfile.Description;
-        meeting.Title = meetingCreateProfile.Title;
-        if(meetingCreateProfile.MeetingParticipants != null)
-            meeting.MeetingParticipants = meetingCreateProfile.MeetingParticipants;
-        await  _context.SaveChangesAsync();
-        return Ok(meeting);
+        return Ok(dto);
+
+
     }
+
     /// <summary>
     /// Delete movie
     /// </summary>
@@ -196,15 +166,12 @@ public class MeetingController : ControllerBase
 
     public async Task<IActionResult> DeleteMeeting(int id)
     {
-        var meet = await _context.Meetings.FindAsync(id);
-        if (meet == null)
+        var dto = await _meetingService.DeleteMeetingAsync(id);
+        if (dto == null)
         {
             return NotFound();
         }
-
-        _context.Remove(meet);
-        await _context.SaveChangesAsync();
-        return Ok(meet);
+        return Ok(dto);
 
     }
     /// <summary>
@@ -217,38 +184,14 @@ public class MeetingController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMeeting(int id)
     {
-        var meet = await _context.Meetings.FindAsync(id);
-        if (meet != null)
-        {
-            return Ok(_mapper.Map<MeetingTitle>(meet));
-        }
-        return NotFound();
+        var dto = await _meetingService.GetMeetingByIdAsync(id);
+        if (dto == null)
+            return NotFound();
+        
+        return Ok(dto);
     }
 
-    /// <summary>
-    /// Create participant
-    /// </summary>
-    /// <param name="participant">paticipant data</param>
-    /// <returns>created participant obj</returns>
-    [HttpPost("participant")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreatePaticipant([FromBody]ParticipantCreateDto dto)
-    {
-        var participant = new Participant();
-        participant.Name = dto.Name; 
-        participant.Email = dto.Email;
-        _context.Participants.Add(participant);
-        await _context.SaveChangesAsync();
 
-        foreach (var id in dto.MeetingsId)
-        {
-          _context.MeetingParticipants.Add(new MeetingParticipants{MeetingId = id, ParticipantId = participant.Id});
-        }
-        await _context.SaveChangesAsync();
-        return Ok(_mapper.Map<ParticipantCreateDto>(participant));
-    }
     
     
 }

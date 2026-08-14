@@ -5,13 +5,9 @@ namespace Task6.DTO_s.Clients;
 public class MeetingUpdateDto
 {
     /// <summary>
-    /// Meetings id
-    /// </summary>
-    public int Id { get; set; }
-    /// <summary>
     /// Meetings Participants list
     /// </summary>
-    public ICollection<MeetingParticipants>? MeetingParticipants { get; set; }
+    public List<int>? ParticipantsId { get; set; }
     
     /// <summary>
     /// Meetings title
