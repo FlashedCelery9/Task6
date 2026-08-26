@@ -25,6 +25,8 @@ public class MeetingDetail
     /// </summary>
     public DateTime StartTime { get; set; }
     
+    public List<MeetingAttachmentsDto?> MeetingAttachments { get; set; }
+    
     /// <summary>
     /// meetings room
     /// </summary>

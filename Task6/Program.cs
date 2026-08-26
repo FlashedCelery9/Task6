@@ -1,7 +1,11 @@
 using System.Reflection;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Task6.data;
+using Task6.Filters;
 using Task6.Services;
+using Task6.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,10 +17,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<MeetingsDBContext>(options => options.
     UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
-
+builder.Services.AddHttpContextAccessor();// НЕ ЗАБУТИ
 //Services
-builder.Services.AddScoped<IMeetingService, MeetingService>();
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddSingleton<IFileUrlBuilder, FileUrlBuilder>(); //ТУТ!!!!!
+builder.Services.AddScoped<IMeetingService, MeetingService>();
+// Фільтр валідації для всіх DTO
+builder.Services.AddScoped(typeof(ValidatorFilter.ValidationFilter<>));
+builder.Services.AddValidatorsFromAssemblyContaining<MeetingCreateDtoValidator>();
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -45,6 +55,15 @@ using (var scope = app.Services.CreateScope())
     SeedsData.Initialize(context);
 }
 app.UseAuthorization();
+
+    
+app.UseStaticFiles(new StaticFileOptions 
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "uploads")
+    ),
+    RequestPath = "/uploads"
+});
 
 app.MapControllers();
 app.Run();

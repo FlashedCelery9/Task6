@@ -14,6 +14,7 @@ public class MeetingsDBContext : DbContext
     public DbSet<Participant> Participants { get; set; }
     public DbSet<MeetingParticipants> MeetingParticipants { get; set; }
     public DbSet<Room> Rooms { get; set; }
+    public DbSet<MeetingAttachment> MeetingAttachments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

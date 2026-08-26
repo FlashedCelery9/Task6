@@ -42,7 +42,6 @@ public static class MeetingQueryableExtension
             query = query.Where(m => m.StartTime >= startTime &&
                                      m.StartTime <= endTime);
         }
-
         return query;
     }
 

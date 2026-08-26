@@ -1,32 +1,49 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Task6.data;
 using Task6.DTO_s.Clients;
 using Task6.DTO_s.ParticipantsDto;
+using Task6.Filters;
 using Task6.Helpers.Pagination;
 using Task6.Helpers.Queryable;
 using Task6.Helpers.QueryParameters;
 using Task6.Models;
 using Task6.Services;
+using Task6.Validators;
 
 
 namespace Task6.Controllers;
 [ApiController]
 [Route("api/meeting")]
 
-public class MeetingController : ControllerBase
+public class MeetingController(MeetingsDBContext _context,
+    IMeetingService _meetingService,
+    IMapper _mapper,
+    IFileStorageService fileStorage) : ControllerBase
 {
-    private readonly MeetingsDBContext _context;
-    private readonly IMeetingService _meetingService;
-    private readonly IMapper _mapper;
-
-    
-    public MeetingController(IMeetingService meetingService)
-    {
-        _meetingService = meetingService;
-
+    /// <summary>
+    /// Pick file to meeting
+    /// </summary>
+    /// <returns>List of meetings</returns>
+    [HttpPost("{id:int}/attachments")]  
+    [Consumes("multipart/form-data")]  
+    [RequestSizeLimit(1024 * 1024 * 10)]  
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadMeetingFile( [FromRoute] int id, IFormFile file)  
+    {        
+        var error = FileValidators.ValidateFile(file, 10 * 1024 * 1024);  
+        if(!_context.Meetings.AnyAsync(m => m.Id == id).Result) 
+            return BadRequest("Meeting not found.");
+        if (error is not null)
+            return BadRequest(new { error });  
+        var dto = await _meetingService.UploadFileAsync(id, file);  
+  
+        return StatusCode(StatusCodes.Status201Created, dto);  
     }
 
     /// <summary>
@@ -52,8 +69,9 @@ public class MeetingController : ControllerBase
     /// <param name="meetingCreate">MeetingCreateDto obj</param>
     /// <returns>Created meeting</returns>
     [HttpPost("meeting")]
+    [ServiceFilter(typeof(ValidatorFilter.ValidationFilter<MeetingCreateDto>))]
     [Consumes("application/json")]
-    [ProducesResponseType<IEnumerable<MeetingTitle>>(StatusCodes.Status201Created)]
+    [ProducesResponseType<IEnumerable<MeetingReadDto>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
     public async Task<MeetingDetail> CreateMeeting([FromBody]MeetingCreateDto meetingCreate)
@@ -67,7 +85,7 @@ public class MeetingController : ControllerBase
     /// </summary>
     /// <returns>List of meetings</returns>
     [HttpGet("bydate")]
-    [ProducesResponseType(typeof(IEnumerable<MeetingTitle>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<MeetingReadDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
@@ -88,7 +106,7 @@ public class MeetingController : ControllerBase
     /// <param name="word">word of description</param>
     /// <returns></returns>
     [HttpGet("byword")]
-    [ProducesResponseType(typeof(IEnumerable<MeetingTitle>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<MeetingReadDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
@@ -180,7 +198,7 @@ public class MeetingController : ControllerBase
     /// <param name="id">id of meeting</param>
     /// <returns>meeting obj</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType<IEnumerable<MeetingTitle>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<IEnumerable<MeetingReadDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMeeting(int id)
     {

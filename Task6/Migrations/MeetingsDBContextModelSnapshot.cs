@@ -33,6 +33,9 @@ namespace Task6.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("RoomId")
                         .HasColumnType("int");
 
@@ -48,6 +51,39 @@ namespace Task6.Migrations
                     b.HasIndex("RoomId");
 
                     b.ToTable("Meetings");
+                });
+
+            modelBuilder.Entity("Task6.Models.MeetingAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MeetingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OriginalName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UploadedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MeetingId");
+
+                    b.ToTable("MeetingAttachments");
                 });
 
             modelBuilder.Entity("Task6.Models.MeetingParticipants", b =>
@@ -111,6 +147,17 @@ namespace Task6.Migrations
                     b.Navigation("Room");
                 });
 
+            modelBuilder.Entity("Task6.Models.MeetingAttachment", b =>
+                {
+                    b.HasOne("Task6.Models.Meeting", "Meeting")
+                        .WithMany("MeetingAttachments")
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meeting");
+                });
+
             modelBuilder.Entity("Task6.Models.MeetingParticipants", b =>
                 {
                     b.HasOne("Task6.Models.Meeting", "Meeting")
@@ -132,6 +179,8 @@ namespace Task6.Migrations
 
             modelBuilder.Entity("Task6.Models.Meeting", b =>
                 {
+                    b.Navigation("MeetingAttachments");
+
                     b.Navigation("MeetingParticipants");
                 });
 

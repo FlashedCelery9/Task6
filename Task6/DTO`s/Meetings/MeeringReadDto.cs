@@ -2,12 +2,12 @@
 
 namespace Task6.DTO_s.Clients;
 
-public class MeeringReadDto
+public class MeetingReadDto
 {
     /// <summary>
     /// Meetings title
     /// </summary>
-    public MeetingTitle Title { get; set; }
+    public string Title { get; set; }
     
     /// <summary>
     /// Meetings start time
@@ -18,6 +18,10 @@ public class MeeringReadDto
     /// Meetings description
     /// </summary>
     public string Description { get; set; } = null!;
+    /// <summary>
+    /// Meetings file
+    /// </summary>
+    public string? FileName { get; set; }
     
     /// <summary>
     /// Meetings participants list

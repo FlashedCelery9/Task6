@@ -11,6 +11,8 @@
     <ItemGroup>
         <PackageReference Include="AutoMapper" Version="16.2.0" />
         <PackageReference Include="Bogus" Version="35.6.5" />
+        <PackageReference Include="FluentValidation" Version="12.1.1" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
@@ -30,6 +32,11 @@
       <Content Update="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="App_Data\uploads\" />
+      <Folder Include="uploads\" />
     </ItemGroup>
 
 </Project>

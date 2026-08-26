@@ -10,9 +10,10 @@ public interface IMeetingService
     Task<PagedResult<MeetingDetail>>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp);
     Task<MeetingDetail>? CreateMeetingAsync([FromBody]MeetingCreateDto meetingCreate);
     Task<PagedResult<MeetingDetail>> GetMeetingsByDateAsync(MeetingQueryParameters qp);
-    Task<PagedResult<MeetingTitle>>? GetMeetingsByWordAsync(MeetingQueryParameters qp);
+    Task<PagedResult<MeetingReadDto>>? GetMeetingsByWordAsync(MeetingQueryParameters qp);
     Task<PagedResult<MeetingDetail>> GetMeetingsByTimeAsync(MeetingQueryParameters qp);
     Task<MeetingDetail> UpdateMeetingAsync(int id, MeetingUpdateDto meetingUpdate);
     Task<MeetingDetail> DeleteMeetingAsync(int id);
     Task<MeetingDetail> GetMeetingByIdAsync(int id);
+    Task<MeetingReadDto> UploadFileAsync(int id, IFormFile file);
 }
