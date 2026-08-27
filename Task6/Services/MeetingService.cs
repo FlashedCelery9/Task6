@@ -44,7 +44,7 @@ public class MeetingService(
             {
                 if (context.Participants.Any(p => p.Id == pid))
                 {
-                    context.MeetingParticipants.Add(new MeetingParticipants{MeetingId = meeting.Id, ParticipantId = pid});
+                    context.MeetingParticipants.Add(new MeetingParticipants{MeetingId = meeting.Id, UserProfileId = pid});
                 }
             }
 
@@ -52,7 +52,7 @@ public class MeetingService(
           
         }
         var final_res = await context.Meetings.Include(m => m.MeetingParticipants)
-            .ThenInclude(mp => mp.Participant)
+            .ThenInclude(mp => mp.UserProfile)
             .FirstOrDefaultAsync(m => m.Id == meeting.Id);
         return mapper.Map<MeetingDetail>(final_res);
 
@@ -106,7 +106,7 @@ public class MeetingService(
             await context.SaveChangesAsync();
             return mapper.Map<MeetingDetail>(meeting);
         }
-        var currentParticipants = meeting.MeetingParticipants.Select(mp => mp.ParticipantId).ToList();
+        var currentParticipants = meeting.MeetingParticipants.Select(mp => mp.UserProfileId).ToList();
         
         var to_delete = currentParticipants.Except(meetingUpdate.ParticipantsId).ToList();
         var toAddIds = meetingUpdate.ParticipantsId.Except(currentParticipants).ToList();
@@ -116,7 +116,7 @@ public class MeetingService(
         foreach (var el in to_delete)
         {
             var el_to_del = meeting.MeetingParticipants
-                .FirstOrDefault(mp => mp.MeetingId == id && mp.ParticipantId == el);
+                .FirstOrDefault(mp => mp.MeetingId == id && mp.UserProfileId == el);
             
             context.MeetingParticipants.Remove(el_to_del);
             
@@ -127,13 +127,13 @@ public class MeetingService(
             if(!context.Participants.Any(p => p.Id == el))
                 continue;
 
-            var el_to_add = new MeetingParticipants{MeetingId = id, ParticipantId = el};
+            var el_to_add = new MeetingParticipants{MeetingId = id, UserProfileId = el};
             
             context.MeetingParticipants.Add(el_to_add);
         }
         await context.SaveChangesAsync();
         var res = await context.Meetings.Include(m => m.MeetingParticipants)
-            .ThenInclude(mp => mp.Participant)
+            .ThenInclude(mp => mp.UserProfile)
             .FirstOrDefaultAsync(m => m.Id == id);
         return mapper.Map<MeetingDetail>(res);
         
@@ -157,7 +157,7 @@ public class MeetingService(
     {
         var meet = await context.Meetings
             .Include(m => m.MeetingParticipants)
-            .ThenInclude(mp => mp.Participant)
+            .ThenInclude(mp => mp.UserProfile)
             .Include(m => m.MeetingAttachments)
             .FirstOrDefaultAsync(m => m.Id == id); 
         if (meet != null)

@@ -4,7 +4,6 @@ using Task6.data;
 using Task6.DTO_s;
 using Task6.DTO_s.Clients;
 using Task6.DTO_s.ParticipantsDto;
-using Task6.Migrations;
 using Task6.Models;
 
 namespace Task6.Profiles;
@@ -20,7 +19,7 @@ public class MeetingMappingPforile : Profile
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
             .ForMember(dest => dest.MeetingParticipants,
                 opt => opt.MapFrom(src => src.MeetingParticipants.Select(mp => new ParticipantDto
-                    { Name = mp.Participant.Name, Id = mp.Participant.Id })))
+                    { Name = mp.UserProfile.User.UserName, Id = mp.UserProfile.Id })))
             .ForMember(
                 dest => dest.MeetingAttachments,
                 opt => opt.MapFrom(src => src.MeetingAttachments.Select(ma => new MeetingAttachmentsDto
