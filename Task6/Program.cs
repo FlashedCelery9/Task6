@@ -1,15 +1,23 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Task6.data;
 using Task6.Filters;
 using Task6.midleware;
 using Task6.Models;
 using Task6.Services;
 using Task6.Services.TempServices;
+using Task6.Services.Token;
+using Task6.Services.UserService;
 using Task6.Validators;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,12 +37,13 @@ builder.Services.AddScoped<OldUsersService>();
 builder.Services.AddSingleton<IFileUrlBuilder, FileUrlBuilder>(); //ТУТ!!!!!
 builder.Services.AddScoped<IMeetingService, MeetingService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
 // Фільтр валідації для всіх DTO
 builder.Services.AddScoped(typeof(ValidatorFilter.ValidationFilter<>));
 builder.Services.AddValidatorsFromAssemblyContaining<MeetingCreateDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
-
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -43,10 +52,66 @@ builder.Services.AddSwaggerGen(options =>
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Вставте лише сам токен без слова Bearer."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
+
 builder.Services.AddIdentity<AppUser, IdentityRole>()
     .AddEntityFrameworkStores<MeetingsDBContext>() //Вказівник на БД. Без нього нічого не працюватиме
     .AddDefaultTokenProviders();
+var jwt = builder.Configuration.GetSection("Jwt");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Не перейменовувати claims із коротких імен у довгі WS-Federation URI
+        options.MapInboundClaims = false;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidIssuer              = jwt["Issuer"],
+
+            ValidateAudience         = true,
+            ValidAudience            = jwt["Audience"],
+
+            ValidateLifetime         = true,
+            ClockSkew                = TimeSpan.Zero,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey         = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwt["Key"]!)),
+
+            NameClaimType            = JwtRegisteredClaimNames.Sub,
+            RoleClaimType            = "role"
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
@@ -66,6 +131,7 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
     SeedsData.Initialize(context);
 }
+app.UseAuthentication();   // ← хто ти? заповнює HttpContext.User
 app.UseAuthorization();
 
     

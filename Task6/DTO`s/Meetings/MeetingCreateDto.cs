@@ -25,5 +25,7 @@ public class MeetingCreateDto
     /// Meetings start time
     /// </summary>
     public DateTime StartTime { get; set; }
-    
+
+    public string AdminsId { get; set; } = null!;
+
 }

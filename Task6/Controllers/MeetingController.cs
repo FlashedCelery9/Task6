@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +52,7 @@ public class MeetingController(MeetingsDBContext _context,
     /// </summary>
     /// <returns>List of meetings</returns>
     [HttpGet]
+    [Authorize]
     [ProducesResponseType(typeof(List<MeetingDetail>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp)
@@ -68,12 +70,13 @@ public class MeetingController(MeetingsDBContext _context,
     /// </summary>
     /// <param name="meetingCreate">MeetingCreateDto obj</param>
     /// <returns>Created meeting</returns>
+    [Authorize]
     [HttpPost("meeting")]
     [ServiceFilter(typeof(ValidatorFilter.ValidationFilter<MeetingCreateDto>))]
     [Consumes("application/json")]
     [ProducesResponseType<IEnumerable<MeetingReadDto>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-
+    
     public async Task<MeetingDetail> CreateMeeting([FromBody]MeetingCreateDto meetingCreate)
     {
         var final_meeting = await _meetingService.CreateMeetingAsync(meetingCreate);
@@ -161,23 +164,24 @@ public class MeetingController(MeetingsDBContext _context,
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
 
-    public async Task<IActionResult> UpdateMeeting([FromRoute] int id, [FromBody] MeetingUpdateDto meetingCreateProfile)
-    {
-        var dto = await _meetingService.UpdateMeetingAsync(id, meetingCreateProfile);
-        if (dto == null)
-        {
-            return NotFound();
-        }
-        return Ok(dto);
-
-
-    }
+    // public async Task<IActionResult> UpdateMeeting([FromRoute] int id, [FromBody] MeetingUpdateDto meetingCreateProfile)
+    // {
+    //     var dto = await _meetingService.UpdateMeetingAsync(id, meetingCreateProfile);
+    //     if (dto == null)
+    //     {
+    //         return NotFound();
+    //     }
+    //     return Ok(dto);
+    //
+    //
+    // }
 
     /// <summary>
     /// Delete movie
     /// </summary>
     /// <param name="id">id of meeting</param>
     /// <returns>Deleted movie</returns>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
