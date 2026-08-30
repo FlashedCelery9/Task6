@@ -18,13 +18,6 @@ public class MeetingReadDto
     /// Meetings description
     /// </summary>
     public string Description { get; set; } = null!;
-    /// <summary>
-    /// Meetings file
-    /// </summary>
-    public string? FileName { get; set; }
-    
-    /// <summary>
-    /// Meetings participants list
-    /// </summary>
-    public List<ParticipantDto> Participants { get; set; } = new();
+
+
 }

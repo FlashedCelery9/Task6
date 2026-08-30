@@ -9,7 +9,7 @@ public class MeetingCreateDto
     /// <summary>
     /// Meetings Participants list
     /// </summary>
-    public List<int>? ParticipantsId { get; set; }
+    public List<int>? UserProfilesId { get; set; }
     
     /// <summary>
     /// Meetings title
@@ -26,6 +26,6 @@ public class MeetingCreateDto
     /// </summary>
     public DateTime StartTime { get; set; }
 
-    public string AdminsId { get; set; } = null!;
+    public string AdminId { get; set; } = null!;
 
 }

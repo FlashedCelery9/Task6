@@ -20,7 +20,7 @@ public class RegisterDtoValidator : AbstractValidator<RegisterDto>
             MinimumLength(6).WithMessage("Password is minimum 6 characters")
             .Matches(@"[0-9]").WithMessage("Any one number");
         
-        RuleFor(x => x.Password)
+        RuleFor(x => x.EnabledPassword)
             .NotEmpty().WithMessage("Password is required")
             .Equal(x => x.Password).WithMessage("Passwords do not match");
     }

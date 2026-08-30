@@ -52,7 +52,7 @@ public class MeetingController(MeetingsDBContext _context,
     /// </summary>
     /// <returns>List of meetings</returns>
     [HttpGet]
-    [Authorize]
+    // [Authorize]
     [ProducesResponseType(typeof(List<MeetingDetail>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp)
@@ -70,9 +70,9 @@ public class MeetingController(MeetingsDBContext _context,
     /// </summary>
     /// <param name="meetingCreate">MeetingCreateDto obj</param>
     /// <returns>Created meeting</returns>
-    [Authorize]
+    // [Authorize]
     [HttpPost("meeting")]
-    [ServiceFilter(typeof(ValidatorFilter.ValidationFilter<MeetingCreateDto>))]
+    [ServiceFilter(typeof(ValidationFilter<MeetingCreateDto>))]
     [Consumes("application/json")]
     [ProducesResponseType<IEnumerable<MeetingReadDto>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -92,12 +92,13 @@ public class MeetingController(MeetingsDBContext _context,
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
-    public async Task<IActionResult> GetMeetingsByDate(int page, int size)
+    public async Task<IActionResult> GetMeetingsByDate(int page, int size, string date)
     {
         MeetingQueryParameters qp = new MeetingQueryParameters();
         qp.Sort = "start_time_desc";
         qp.Page = page;
         qp.Size = size;
+        qp.StartTime = date;
         
         var dto = await _meetingService.GetMeetingsByDateAsync(qp); 
         return Ok(dto);
@@ -124,7 +125,7 @@ public class MeetingController(MeetingsDBContext _context,
         qp.Size = size;
         qp.Search_word = word;
 
-        var dto = _meetingService.GetMeetingsByWordAsync(qp);
+        var dto = await _meetingService.GetMeetingsByWordAsync(qp);
 
         return Ok(dto);
     }
@@ -147,7 +148,7 @@ public class MeetingController(MeetingsDBContext _context,
         qp.StartTime = start;
         qp.EndTime = end;
 
-        var dto = _meetingService.GetMeetingsByDateAsync(qp);
+        var dto = await _meetingService.GetMeetingsByDateAsync(qp);
         
         return Ok(dto);
     }
@@ -158,30 +159,30 @@ public class MeetingController(MeetingsDBContext _context,
     /// <param name="id">id of movie</param>
     /// <param name="meetingCreateProfile">MeetingCreateDto type obj</param>
     /// <returns></returns>
+    [Authorize]
     [HttpPut("{id}")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
 
 
-    // public async Task<IActionResult> UpdateMeeting([FromRoute] int id, [FromBody] MeetingUpdateDto meetingCreateProfile)
-    // {
-    //     var dto = await _meetingService.UpdateMeetingAsync(id, meetingCreateProfile);
-    //     if (dto == null)
-    //     {
-    //         return NotFound();
-    //     }
-    //     return Ok(dto);
-    //
-    //
-    // }
+    public async Task<IActionResult> UpdateMeeting([FromRoute] int id, MeetingUpdateDto meetingCreateProfile)
+    {
+        var dto = await _meetingService.UpdateMeetingAsync(id, meetingCreateProfile);
+        if (dto == null)
+        {
+            return NotFound("meeting not found");
+        }
+        return Ok(dto);
+    
+    
+    }
 
     /// <summary>
     /// Delete movie
     /// </summary>
     /// <param name="id">id of meeting</param>
     /// <returns>Deleted movie</returns>
-    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -208,7 +209,7 @@ public class MeetingController(MeetingsDBContext _context,
     {
         var dto = await _meetingService.GetMeetingByIdAsync(id);
         if (dto == null)
-            return NotFound();
+            return NotFound("Not found");
         
         return Ok(dto);
     }

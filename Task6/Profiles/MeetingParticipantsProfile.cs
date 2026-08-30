@@ -8,8 +8,8 @@ public class MeetingParticipantsProfile : Profile
 {
     public MeetingParticipantsProfile()
     {
-        CreateMap<MeetingParticipants, ParticipantDto>()
-            .ForMember(dest => dest.Name, opt => opt.MapFrom(src=> src.UserProfile.User.UserName))
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.UserProfile.Id));
+        CreateMap<UserProfile, ParticipantDto>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src=> src.User.UserName))
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.User.Id));
     }
 }

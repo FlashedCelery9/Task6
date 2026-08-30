@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Task6.Filters;
 
-public class ValidatorFilter
-{
+
     /// <summary>
     /// Універсальний фільтр валідації: перехоплює аргумент дії типу T, валідує його
     /// FluentValidation-валідатором з DI і, якщо не валідно, одразу повертає 400 ValidationProblemDetails.
@@ -46,4 +45,3 @@ public class ValidatorFilter
         }
     }
  
-}

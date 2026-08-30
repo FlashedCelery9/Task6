@@ -5,7 +5,7 @@ public class ParticipantDto
     /// <summary>
     /// Participants id
     /// </summary>
-    public int Id { get; set; }
+    public string Id { get; set; }
     
     /// <summary>
     /// Participants name

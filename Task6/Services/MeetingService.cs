@@ -38,16 +38,15 @@ public class MeetingService(
         meeting.Title = meetingCreate.Title;
         meeting.StartTime = meetingCreate.StartTime;
         meeting.Description = meetingCreate.Description;
-        meeting.AdminsId = currentUserService.UserId;
-        
+        meeting.AdminId = meetingCreate.AdminId;
         context.Meetings.Add(meeting);
         
         await context.SaveChangesAsync();
-        if (meetingCreate.ParticipantsId.Count > 0)
+        if (meetingCreate.UserProfilesId.Count > 0 || meetingCreate.UserProfilesId != null || meetingCreate.UserProfilesId[0] != 0)
         {
-            foreach (var pid in meetingCreate.ParticipantsId)
+            foreach (var pid in meetingCreate.UserProfilesId)
             {
-                if (context.Participants.Any(p => p.Id == pid))
+                if (context.UserProfiles.Any(p => p.Id == pid))
                 {
                     context.MeetingParticipants.Add(new MeetingParticipants{MeetingId = meeting.Id, UserProfileId = pid});
                 }
@@ -58,14 +57,17 @@ public class MeetingService(
         }
         var final_res = await context.Meetings.Include(m => m.MeetingParticipants)
             .ThenInclude(mp => mp.UserProfile)
-            .FirstOrDefaultAsync(m => m.Id == meeting.Id);
+            .ThenInclude(mp => mp.User)
+            .Include(m => m.Admin)
+            .FirstOrDefaultAsync(m => m.Id == meeting.Id)
+            ;
         return mapper.Map<MeetingDetail>(final_res);
 
     }
 
     public async Task<PagedResult<MeetingDetail>> GetMeetingsByDateAsync(MeetingQueryParameters qp)
     {
-        var query = context.Meetings.AsNoTracking()
+        var query = context.Meetings.Include(m => m.Admin).AsNoTracking()
             .ApplyFilters(qp)
             .ApplySort(qp);
 
@@ -86,7 +88,9 @@ public class MeetingService(
 
     public async Task<PagedResult<MeetingDetail>> GetMeetingsByTimeAsync(MeetingQueryParameters qp)
     {
-        var query = context.Meetings.AsNoTracking()
+        var query = context.Meetings.Include(m => m.MeetingAttachments)
+            .Include(m => m.Admin)
+            .AsNoTracking()
             .ApplyFilters(qp)
             .ApplySort(qp);
 
@@ -94,60 +98,32 @@ public class MeetingService(
         return res;
     }
 
-    // public async Task<MeetingDetail> UpdateMeetingAsync(int id, MeetingUpdateDto meetingUpdate)
-    // {
-    //     var meeting = await context.Meetings.Include(m => m.MeetingParticipants).FirstOrDefaultAsync(m=> m.Id == id);
-    //
-    //     if (meeting == null)
-    //     {
-    //         return null;
-    //     }
-    //     meeting.Title = meetingUpdate.Title;
-    //     meeting.Description = meetingUpdate.Description;
-    //     meeting.StartTime = meetingUpdate.StartTime;
-    //
-    //     if (meetingUpdate.ParticipantsId.Count == 0)
-    //     {
-    //         await context.SaveChangesAsync();
-    //         return mapper.Map<MeetingDetail>(meeting);
-    //     }
-    //     var currentParticipants = meeting.MeetingParticipants.Select(mp => mp.UserProfileId).ToList();
-    //     
-    //     var to_delete = currentParticipants.Except(meetingUpdate.ParticipantsId).ToList();
-    //     var toAddIds = meetingUpdate.ParticipantsId.Except(currentParticipants).ToList();
-    //
-    //     
-    //     //Deleting
-    //     foreach (var el in to_delete)
-    //     {
-    //         var el_to_del = meeting.MeetingParticipants
-    //             .FirstOrDefault(mp => mp.MeetingId == id && mp.UserProfileId == el);
-    //         
-    //         context.MeetingParticipants.Remove(el_to_del);
-    //         
-    //     }
-    //
-    //     foreach (var el in toAddIds)
-    //     {
-    //         if(!context.Participants.Any(p => p.Id == el))
-    //             continue;
-    //
-    //         var el_to_add = new MeetingParticipants{MeetingId = id, UserProfileId = el};
-    //         
-    //         context.MeetingParticipants.Add(el_to_add);
-    //     }
-    //     await context.SaveChangesAsync();
-    //     var res = await context.Meetings.Include(m => m.MeetingParticipants)
-    //         .ThenInclude(mp => mp.UserProfile)
-    //         .FirstOrDefaultAsync(m => m.Id == id);
-    //     return mapper.Map<MeetingDetail>(res);
-    //     
-    //     
-    // }
-
-    public async Task<MeetingDetail> DeleteMeetingAsync(int id)
+    public async Task<MeetingDetail?> UpdateMeetingAsync(int id, MeetingUpdateDto meetingUpdate)
     {
-        var meet = await context.Meetings.FindAsync(id);
+        var meeting = await context.Meetings.FirstOrDefaultAsync(m => m.Id == id);
+        if (meeting == null)
+        {
+            return null;
+        }
+        meeting.Title = meetingUpdate.Title;
+        meeting.Description = meetingUpdate.Description;
+        meeting.StartTime = meetingUpdate.StartTime;
+        meeting.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+        return  mapper.Map<MeetingDetail>(meeting);
+
+
+
+
+}
+
+    public async Task<MeetingDetail?> DeleteMeetingAsync(int id)
+    {
+        var meet = await context.Meetings.Include(m => m.Admin)
+            .Include(m => m.MeetingParticipants)
+            .ThenInclude(mp => mp.UserProfile)
+            .ThenInclude(up => up.User)
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (meet == null)
         {
             return null;
@@ -158,13 +134,15 @@ public class MeetingService(
         return mapper.Map<MeetingDetail>(meet);
     }
 
-    public async Task<MeetingDetail> GetMeetingByIdAsync(int id)
+    public async Task<MeetingDetail?> GetMeetingByIdAsync(int id)
     {
         var meet = await context.Meetings
             .Include(m => m.MeetingParticipants)
             .ThenInclude(mp => mp.UserProfile)
+            .ThenInclude(mp => mp.User)
             .Include(m => m.MeetingAttachments)
-            .FirstOrDefaultAsync(m => m.Id == id); 
+            .Include(m => m.Admin)
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (meet != null)
         {
             return mapper.Map<MeetingDetail>(meet);
@@ -172,7 +150,7 @@ public class MeetingService(
         return null;
     }
 
-    public async Task<MeetingReadDto?> UploadFileAsync(int id, IFormFile file)
+    public async Task<MeetingDetail?> UploadFileAsync(int id, IFormFile file)
     {
         var meeting = await context.Meetings.FirstOrDefaultAsync(m => m.Id == id);
         if (meeting == null) return null;
@@ -193,8 +171,8 @@ public class MeetingService(
         
         await context.SaveChangesAsync();
         
-        var dto = mapper.Map<MeetingReadDto>(meeting);
-        dto.FileName = fileUrlBuilder.PublicUrl(meeting.FileName, "MeetingFiles");;
+        var dto = mapper.Map<MeetingDetail>(meeting);
+        dto.Filename = fileUrlBuilder.PublicUrl(meeting.FileName, "MeetingFiles");;
         
         return dto;
     }

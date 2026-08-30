@@ -2,6 +2,7 @@
 using Task6.DTO_s.ParticipantsDto;
 using Task6.Models;
 using Task6.Services;
+using Task6.Services.Participant;
 
 namespace Task6.Controllers;
 [ApiController]
@@ -13,7 +14,7 @@ public class ParticipantController : ControllerBase
     {
         _participantService = participantService;
     }
-    
+
     /// <summary>
     /// Create participant
     /// </summary>
@@ -23,9 +24,32 @@ public class ParticipantController : ControllerBase
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreatePaticipant([FromBody]ParticipantCreateDto dto)
+    public async Task<IActionResult> CreatePaticipant([FromBody] ParticipantToMeetingDto dto)
     {
-        var participant = await _participantService.CreatePaticipant(dto);
+        var participant = await _participantService.AddParticipantToMeetingAsync(dto);
+        if (participant == null)
+        {
+            return BadRequest("Participant or meeting not found");
+        }
+    return Ok(participant);
+    }
+    
+    /// <summary>
+    /// Remove participant
+    /// </summary>
+    /// <param name="participant">paticipant data</param>
+    /// <returns>created participant obj</returns>
+    [HttpDelete]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RemoveParticipant([FromBody] ParticipantToMeetingDto dto)
+    {
+        var participant = await _participantService.RemoveParticipantFromMeetingAsync(dto);
+        if (participant == null)
+        {
+            return BadRequest("Participant or meeting not found");
+        }
         return Ok(participant);
     }
     
