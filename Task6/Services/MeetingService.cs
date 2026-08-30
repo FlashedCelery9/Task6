@@ -20,7 +20,7 @@ public class MeetingService(
     ICurrentUserService currentUserService
     ) : IMeetingService
 {
-    
+    private readonly string AttachmentFolder = "MeetingAttachments";
     
     public async Task<PagedResult<MeetingDetail>>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp)
     {
@@ -164,7 +164,7 @@ public class MeetingService(
         {
             fileStorageService.Delete("MeetingFiles", meeting.FileName, FileVisibility.Public);
         }    
-        meeting.FileName = fileName;
+        meeting.FileName = fileName.FileName;
         meetingAttachment.StoredFileName = meeting.FileName;
         meetingAttachment.UploadedAtUtc = DateTime.UtcNow;
         context.MeetingAttachments.Add(meetingAttachment);
@@ -176,7 +176,39 @@ public class MeetingService(
         
         return dto;
     }
+    public async Task<int?> AddAttachmentAsync(int meetingId, IFormFile file, CancellationToken ct = default)
+    {
+        var meeting = await context.Meetings.FindAsync([meetingId], ct);
+        if (meeting is null) return null;
 
+        var stored = await fileStorageService.SaveAsync(file, AttachmentFolder, FileVisibility.Private);
+
+        var attachment = new MeetingAttachment
+        {
+            MeetingId = meetingId,
+            StoredFileName = stored.FileName,
+            OriginalName = stored.OriginalFileName
+            ,ContentType = file.ContentType
+        };
+        context.MeetingAttachments.Add(attachment);
+        await context.SaveChangesAsync();
+
+        return attachment.Id;
+    }
+    public async Task<FileDownload?> GetAttachmentAsync(int attachmentId, CancellationToken ct = default)
+    {
+        var att = await context.MeetingAttachments.FindAsync([attachmentId], ct);
+        if (att is null) return null;
+
+        var download = await fileStorageService.OpenRead(AttachmentFolder, att.StoredFileName, FileVisibility.Private);
+        if (download is null) return null;
+        
+        return download with
+        {
+            DownloadName = att.OriginalName,
+            ContentType = download.ContentType
+        };
+    }
     // public async Task<MeetingDetail?> AddParticipant(string email, int meetingid)
     // {
     //     var participant = await userManager.FindByEmailAsync(email);

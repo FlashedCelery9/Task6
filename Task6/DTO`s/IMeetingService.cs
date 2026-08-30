@@ -4,6 +4,7 @@ using Task6.Helpers.Pagination;
 using Task6.Helpers.QueryParameters;
 
 namespace Task6.Services;
+public sealed record FileDownload(Stream Download, string ContentType, string DownloadName);
 
 public interface IMeetingService
 { 
@@ -17,4 +18,6 @@ public interface IMeetingService
     Task<MeetingDetail?> GetMeetingByIdAsync(int id);
     // Task<MeetingDetail> AddParticipant(string email, int meetingId);
     Task<MeetingDetail?> UploadFileAsync(int id, IFormFile file);
+    Task<int?> AddAttachmentAsync(int meetingId, IFormFile file, CancellationToken ct = default);
+    Task<FileDownload?> GetAttachmentAsync(int attachmentId, CancellationToken ct = default);
 }

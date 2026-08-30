@@ -29,7 +29,7 @@ public class MeetingController(MeetingsDBContext _context,
     /// Pick file to meeting
     /// </summary>
     /// <returns>List of meetings</returns>
-    [HttpPost("{id:int}/attachments")]  
+    [HttpPost("{id:int}/public_attachments")]  
     [Consumes("multipart/form-data")]  
     [RequestSizeLimit(1024 * 1024 * 10)]  
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -212,6 +212,40 @@ public class MeetingController(MeetingsDBContext _context,
             return NotFound("Not found");
         
         return Ok(dto);
+    }
+    
+    [HttpPost("{meetingId:int}/attachments")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(1024 * 1024 * 10)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadAttachment(int meetingId, IFormFile file)
+    {
+        try
+        {
+            var attachmentId = await _meetingService.AddAttachmentAsync(meetingId, file);
+            if (attachmentId is null) return NotFound();
+
+            return CreatedAtAction(nameof(Download), new { meetingId, attachmentId }, new { attachmentId });
+        }
+        catch (FileValidationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [Authorize]
+    [HttpGet("attachments/{attachmentId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Download(int attachmentId, CancellationToken ct)
+    {
+        var download = await _meetingService.GetAttachmentAsync(attachmentId, ct);
+        if (download is null) return NotFound();
+
+        // attachment → браузер запропонує зберегти файл під оригінальним ім'ям.
+        return File(download.Download, download.ContentType, download.DownloadName);
     }
 
 

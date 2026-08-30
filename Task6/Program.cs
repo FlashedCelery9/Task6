@@ -42,6 +42,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<MeetingCreateDtoValidator>(
 builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+// builder.Services.AddScoped<FileValidationException>();
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -53,30 +54,33 @@ options.IncludeXmlComments(xmlPath);
 
 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
 {
-    Name = "Authorization",
-    Type = SecuritySchemeType.Http,
-    Scheme = "bearer",
-    BearerFormat = "JWT",
-    In = ParameterLocation.Header,
-    Description = "Вставте лише сам токен без слова Bearer."
+Name = "Authorization",
+Type = SecuritySchemeType.Http,
+Scheme = "bearer",
+BearerFormat = "JWT",
+In = ParameterLocation.Header,
+Description = "Вставте лише сам токен без слова Bearer."
 });
 
 options.AddSecurityRequirement(c => new OpenApiSecurityRequirement
 {
-    {
-        new OpenApiSecuritySchemeReference("Bearer", c),
-        new List<string>()
-    }
-    });
+{
+new OpenApiSecuritySchemeReference("Bearer", c),
+new List<string>()
+}
+});
 });
 
-// Налаштування Identity (без Cookies - тільки для UserManager)
-builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
-    {
-        options.SignIn.RequireConfirmedEmail = false;
-    })
-    .AddEntityFrameworkStores<MeetingsDBContext>()
-    .AddDefaultTokenProviders();
+// Налаштування Identity (без Cookies - тільки UserManager / SignInManager / Roles)
+// AddIdentityCore не реєструє cookie-схеми автентифікації, тому єдиною схемою лишається JWT.
+builder.Services.AddIdentityCore<AppUser>(options =>
+{
+options.SignIn.RequireConfirmedEmail = false;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<MeetingsDBContext>()
+.AddSignInManager()
+.AddDefaultTokenProviders();
 
 var jwt = builder.Configuration.GetSection("Jwt");
 
@@ -106,21 +110,20 @@ await context.Response.WriteAsJsonAsync(new { error = "Forbidden", message = "In
 };
 options.TokenValidationParameters = new TokenValidationParameters
 {
-    ValidateIssuer = true,
-    ValidIssuer = jwt["Issuer"],
+ValidateIssuer = true,
+ValidIssuer = jwt["Issuer"],
 
-    ValidateAudience = true,
-    ValidAudience = jwt["Audience"],
+ValidateAudience = true,
+ValidAudience = jwt["Audience"],
+ValidateLifetime = true,
+ClockSkew = TimeSpan.Zero,
 
-    ValidateLifetime = true,
-    ClockSkew = TimeSpan.Zero,
+ValidateIssuerSigningKey = true,
+IssuerSigningKey = new SymmetricSecurityKey(
+    Encoding.UTF8.GetBytes(jwt["Key"]!)),
 
-    ValidateIssuerSigningKey = true,
-    IssuerSigningKey = new SymmetricSecurityKey(
-        Encoding.UTF8.GetBytes(jwt["Key"]!)),
-
-    NameClaimType = JwtRegisteredClaimNames.Sub,
-    RoleClaimType = "role"
+NameClaimType = JwtRegisteredClaimNames.Sub,
+RoleClaimType = "role"
 };
 });
 
