@@ -7,7 +7,7 @@ public class Meeting
     public string Title { get; set; } = null!;
     public string? Description { get; set; } 
     public DateTime StartTime { get; set; }
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; } 
     public string? FileName { get; set; }
     public int? RoomId { get; set; }
     public Room? Room { get; set; }

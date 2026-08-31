@@ -6,10 +6,7 @@ namespace Task6.DTO_s.Clients;
 
 public class MeetingCreateDto
 {
-    /// <summary>
-    /// Meetings Participants list
-    /// </summary>
-    public List<int>? UserProfilesId { get; set; }
+
     
     /// <summary>
     /// Meetings title

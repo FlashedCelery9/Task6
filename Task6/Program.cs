@@ -30,11 +30,15 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 builder.Services.AddHttpContextAccessor();// НЕ ЗАБУТИ
 //Services
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
+builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<OldUsersService>();
 builder.Services.AddSingleton<IFileUrlBuilder, FileUrlBuilder>(); //ТУТ!!!!!
 builder.Services.AddScoped<IMeetingService, MeetingService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<MeetingPermisionService>();
+
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 // Фільтр валідації для всіх DTO
 builder.Services.AddScoped(typeof(ValidationFilter<>));

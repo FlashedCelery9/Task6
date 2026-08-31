@@ -38,23 +38,11 @@ public class MeetingService(
         meeting.Title = meetingCreate.Title;
         meeting.StartTime = meetingCreate.StartTime;
         meeting.Description = meetingCreate.Description;
-        meeting.AdminId = meetingCreate.AdminId;
+        meeting.AdminId = currentUserService.UserId;
         context.Meetings.Add(meeting);
         
         await context.SaveChangesAsync();
-        if (meetingCreate.UserProfilesId.Count > 0 || meetingCreate.UserProfilesId != null || meetingCreate.UserProfilesId[0] != 0)
-        {
-            foreach (var pid in meetingCreate.UserProfilesId)
-            {
-                if (context.UserProfiles.Any(p => p.Id == pid))
-                {
-                    context.MeetingParticipants.Add(new MeetingParticipants{MeetingId = meeting.Id, UserProfileId = pid});
-                }
-            }
-
-            await context.SaveChangesAsync();
-          
-        }
+    
         var final_res = await context.Meetings.Include(m => m.MeetingParticipants)
             .ThenInclude(mp => mp.UserProfile)
             .ThenInclude(mp => mp.User)

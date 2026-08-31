@@ -55,6 +55,10 @@ public class MeetingsDBContext : IdentityDbContext<AppUser>
             .HasOne(ma => ma.Meeting)
             .WithMany(m => m.MeetingAttachments)
             .HasForeignKey(ma => ma.MeetingId);
+        modelBuilder.Entity<Meeting>()
+            .Property(m => m.UpdatedAt)
+            .HasDefaultValueSql(null);
+
     }
     
 }

@@ -10,9 +10,11 @@ namespace Task6.Controllers;
 public class ParticipantController : ControllerBase
 {
     private readonly IParticipantService _participantService;
-    public ParticipantController(IParticipantService participantService)
+    private readonly MeetingPermisionService permisionService;
+    public ParticipantController(IParticipantService participantService, MeetingPermisionService permisionService)
     {
         _participantService = participantService;
+        this.permisionService = permisionService;
     }
 
     /// <summary>
@@ -26,6 +28,10 @@ public class ParticipantController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreatePaticipant([FromBody] ParticipantToMeetingDto dto)
     {
+        if (!await permisionService.IsMeetingAdmin(dto.MeetingId))
+        {
+            return BadRequest("You do not have permission to access this meeting");
+        }
         var participant = await _participantService.AddParticipantToMeetingAsync(dto);
         if (participant == null)
         {
@@ -45,6 +51,10 @@ public class ParticipantController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveParticipant([FromBody] ParticipantToMeetingDto dto)
     {
+        if (!await permisionService.IsMeetingAdmin(dto.MeetingId))
+        {
+            return BadRequest("You do not have permission to access this meeting");
+        }
         var participant = await _participantService.RemoveParticipantFromMeetingAsync(dto);
         if (participant == null)
         {

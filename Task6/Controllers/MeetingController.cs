@@ -23,12 +23,14 @@ namespace Task6.Controllers;
 public class MeetingController(MeetingsDBContext _context,
     IMeetingService _meetingService,
     IMapper _mapper,
-    IFileStorageService fileStorage) : ControllerBase
+    IFileStorageService fileStorage,
+    MeetingPermisionService permisionService) : ControllerBase
 {
     /// <summary>
     /// Pick file to meeting
     /// </summary>
     /// <returns>List of meetings</returns>
+    [Authorize]
     [HttpPost("{id:int}/public_attachments")]  
     [Consumes("multipart/form-data")]  
     [RequestSizeLimit(1024 * 1024 * 10)]  
@@ -41,7 +43,11 @@ public class MeetingController(MeetingsDBContext _context,
         if(!_context.Meetings.AnyAsync(m => m.Id == id).Result) 
             return BadRequest("Meeting not found.");
         if (error is not null)
-            return BadRequest(new { error });  
+            return BadRequest(new { error });
+        if (!await permisionService.IsMeetingAdmin(id))
+        {
+            return BadRequest("You dont have permission");
+        }
         var dto = await _meetingService.UploadFileAsync(id, file);  
   
         return StatusCode(StatusCodes.Status201Created, dto);  
@@ -52,7 +58,7 @@ public class MeetingController(MeetingsDBContext _context,
     /// </summary>
     /// <returns>List of meetings</returns>
     [HttpGet]
-    // [Authorize]
+    [Authorize]
     [ProducesResponseType(typeof(List<MeetingDetail>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp)
@@ -70,7 +76,7 @@ public class MeetingController(MeetingsDBContext _context,
     /// </summary>
     /// <param name="meetingCreate">MeetingCreateDto obj</param>
     /// <returns>Created meeting</returns>
-    // [Authorize]
+    [Authorize]
     [HttpPost("meeting")]
     [ServiceFilter(typeof(ValidationFilter<MeetingCreateDto>))]
     [Consumes("application/json")]
@@ -168,6 +174,10 @@ public class MeetingController(MeetingsDBContext _context,
 
     public async Task<IActionResult> UpdateMeeting([FromRoute] int id, MeetingUpdateDto meetingCreateProfile)
     {
+        if (!await permisionService.IsMeetingAdmin(id))
+        {
+            return BadRequest("You dont have permission");
+        }
         var dto = await _meetingService.UpdateMeetingAsync(id, meetingCreateProfile);
         if (dto == null)
         {
@@ -189,6 +199,10 @@ public class MeetingController(MeetingsDBContext _context,
 
     public async Task<IActionResult> DeleteMeeting(int id)
     {
+        if (!await permisionService.IsMeetingAdmin(id))
+        {
+            return BadRequest("You dont have permission");
+        }
         var dto = await _meetingService.DeleteMeetingAsync(id);
         if (dto == null)
         {
@@ -224,6 +238,10 @@ public class MeetingController(MeetingsDBContext _context,
     {
         try
         {
+            if (!await permisionService.IsMeetingAdmin(meetingId))
+            {
+                return BadRequest("You dont have permission");
+            }
             var attachmentId = await _meetingService.AddAttachmentAsync(meetingId, file);
             if (attachmentId is null) return NotFound();
 
