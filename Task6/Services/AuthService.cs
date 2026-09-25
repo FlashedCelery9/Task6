@@ -17,6 +17,7 @@ public class AuthService : IAuthService
         _signInManager = signInManager;
         _context = context;
     }
+
     public async Task<IdentityResult> RegisterAsync(RegisterDto dto)
     {
         var user = new AppUser()
@@ -25,9 +26,12 @@ public class AuthService : IAuthService
             UserName = dto.Email.Split("@")[0]
         };
         var result = await _userManager.CreateAsync(user, dto.Password);
+        if (!result.Succeeded)
+        {
+            return result;
+        }
         var userProfile = new UserProfile();
-        var userRes = await _userManager.FindByEmailAsync(user.Email);
-        userProfile.UserId = userRes.Id;
+        userProfile.UserId = user.Id;
         _context.UserProfiles.Add(userProfile);
         await _context.SaveChangesAsync();
         return result;

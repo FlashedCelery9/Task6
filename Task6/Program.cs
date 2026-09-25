@@ -41,10 +41,8 @@ builder.Services.AddScoped<MeetingPermisionService>();
 
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 // Фільтр валідації для всіх DTO
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped(typeof(ValidationFilter<>));
-builder.Services.AddValidatorsFromAssemblyContaining<MeetingCreateDtoValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // builder.Services.AddScoped<FileValidationException>();
 

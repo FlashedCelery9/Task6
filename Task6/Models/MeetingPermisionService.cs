@@ -4,7 +4,8 @@ using Task6.Services.UserService;
 
 namespace Task6.Services;
 
-public class MeetingPermisionService(ICurrentUserService currentUserService, MeetingsDBContext context)
+public class MeetingPermisionService(ICurrentUserService currentUserService,
+    MeetingsDBContext context)
 {
     public async Task<bool> IsMeetingAdmin(int meetingId)
     {

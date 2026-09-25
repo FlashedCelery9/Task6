@@ -40,14 +40,15 @@ public class MeetingController(MeetingsDBContext _context,
     public async Task<IActionResult> UploadMeetingFile( [FromRoute] int id, IFormFile file)  
     {        
         var error = FileValidators.ValidateFile(file, 10 * 1024 * 1024);  
-        if(!_context.Meetings.AnyAsync(m => m.Id == id).Result) 
-            return BadRequest("Meeting not found.");
-        if (error is not null)
-            return BadRequest(new { error });
         if (!await permisionService.IsMeetingAdmin(id))
         {
             return BadRequest("You dont have permission");
         }
+        if(!_context.Meetings.AnyAsync(m => m.Id == id).Result) 
+            return BadRequest("Meeting not found.");
+        if (error is not null)
+            return BadRequest(new { error });
+        
         var dto = await _meetingService.UploadFileAsync(id, file);  
   
         return StatusCode(StatusCodes.Status201Created, dto);  
@@ -154,7 +155,7 @@ public class MeetingController(MeetingsDBContext _context,
         qp.StartTime = start;
         qp.EndTime = end;
 
-        var dto = await _meetingService.GetMeetingsByDateAsync(qp);
+        var dto = await _meetingService.GetMeetingsByTimeAsync(qp);
         
         return Ok(dto);
     }

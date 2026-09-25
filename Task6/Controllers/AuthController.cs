@@ -77,7 +77,7 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register(RegisterDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Register(RegisterDto request)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is not null)
@@ -85,9 +85,13 @@ public class AuthController : ControllerBase
             return BadRequest("This email address already exists");
         }
         
-        var result = _authService.RegisterAsync(request);
+        var result = await _authService.RegisterAsync(request);
+        if (result == IdentityResult.Failed())
+        {
+            return StatusCode(StatusCodes.Status400BadRequest);
+        }
         
-        return Ok(result.Result);
+        return Ok(result);
 
     }
     

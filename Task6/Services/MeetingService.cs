@@ -9,6 +9,7 @@ using Task6.Helpers.Queryable;
 using Task6.Helpers.QueryParameters;
 using Task6.Models;
 using Task6.Services.UserService;
+using Task6.Validators;
 
 namespace Task6.Services;
 
@@ -63,13 +64,13 @@ public class MeetingService(
         return res;
     }
 
-    public async Task<PagedResult<MeetingReadDto>>? GetMeetingsByWordAsync(MeetingQueryParameters qp)
+    public async Task<PagedResult<MeetingDetail>>? GetMeetingsByWordAsync(MeetingQueryParameters qp)
     {
         var query = context.Meetings.AsNoTracking()
             .ApplyFilters(qp)
             .ApplySort(qp);
 
-        var res = await query.ToPagedResultAsync<Meeting,  MeetingReadDto>(qp.Page, qp.Size, mapper.ConfigurationProvider);
+        var res = await query.ToPagedResultAsync<Meeting,  MeetingDetail>(qp.Page, qp.Size, mapper.ConfigurationProvider);
         return res;
 
     }
@@ -166,6 +167,10 @@ public class MeetingService(
     }
     public async Task<int?> AddAttachmentAsync(int meetingId, IFormFile file, CancellationToken ct = default)
     {
+        if (FileValidators.ValidateFile(file, file.Length) != null)
+        {
+            return null;
+        }
         var meeting = await context.Meetings.FindAsync([meetingId], ct);
         if (meeting is null) return null;
 
