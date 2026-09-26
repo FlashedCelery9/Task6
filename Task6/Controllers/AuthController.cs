@@ -1,10 +1,13 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Task6.DTO_s.Auth;
 using Task6.DTO_s.Identity;
+using Task6.Features.Auth.Commands.Login;
+using Task6.Features.Auth.Commands.Register;
 using Task6.Filters;
 using Task6.Models;
 using Task6.Services;
@@ -16,19 +19,14 @@ namespace Task6.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
-    private readonly SignInManager<AppUser> _signInManager;
-    private readonly ITokenService _tokenService;
-    private readonly IAuthService _authService;
+    private readonly IMediator _mediator;
 
     public AuthController(UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager,
-        ITokenService tokenService,
-        IAuthService authService)
+        IMediator mediator)
     {
         _userManager = userManager;
-        _signInManager = signInManager;
-        _tokenService = tokenService;
-        _authService = authService;
+  
+        _mediator = mediator;
     }
 
     [HttpPost("login", Name = "LoginV1")]
@@ -40,20 +38,9 @@ public class AuthController : ControllerBase
         LoginDto request,
         CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null)
-        {
-            return Unauthorized(new ProblemDetails
-            {
-                Title = "Невірний email або пароль",
-                Status = StatusCodes.Status401Unauthorized
-            });
-        }
+        var result = await _mediator.Send(new LoginCommand(request), cancellationToken);
 
-        var result = await _signInManager.CheckPasswordSignInAsync(
-            user, request.Password, lockoutOnFailure: true);
-
-        if (!result.Succeeded)
+        if (!result.Success)
         {
             return Unauthorized(new ProblemDetails
             {
@@ -63,13 +50,7 @@ public class AuthController : ControllerBase
                 Status = StatusCodes.Status401Unauthorized
             });
         }
-
-        var token = await _tokenService.CreateAccessTokenAsync(user, cancellationToken);
-
-        return Ok(new AuthResponseDto(
-            AccessToken: token.Token,
-            ExpiresAtUtc: token.ExpiresAtUtc,
-            TokenType: "Bearer"));
+        return Ok(result.Response);
     }
 
     [HttpPost("register", Name = "registerV1")]
@@ -77,21 +58,20 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register(RegisterDto request)
+    public async Task<IActionResult> Register(RegisterDto request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is not null)
         {
             return BadRequest("This email address already exists");
         }
-        
-        var result = await _authService.RegisterAsync(request);
-        if (result == IdentityResult.Failed())
+
+        var result = await _mediator.Send(new RegisterCommand(request), ct);
+        if (!result.Succeeded)
         {
-            return StatusCode(StatusCodes.Status400BadRequest);
+            return BadRequest(result.Errors);
         }
-        
-        return Ok(result);
+        return Ok();
 
     }
     

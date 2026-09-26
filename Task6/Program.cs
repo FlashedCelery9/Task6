@@ -35,7 +35,7 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<OldUsersService>();
 builder.Services.AddSingleton<IFileUrlBuilder, FileUrlBuilder>(); //ТУТ!!!!!
 builder.Services.AddScoped<IMeetingService, MeetingService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+// builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<MeetingPermisionService>();
 
@@ -66,11 +66,11 @@ Description = "Вставте лише сам токен без слова Beare
 
 options.AddSecurityRequirement(c => new OpenApiSecurityRequirement
 {
-{
-new OpenApiSecuritySchemeReference("Bearer", c),
-new List<string>()
-}
-});
+    {
+    new OpenApiSecuritySchemeReference("Bearer", c),
+    new List<string>()
+    }
+    });
 });
 
 // Налаштування Identity (без Cookies - тільки UserManager / SignInManager / Roles)
@@ -83,6 +83,10 @@ options.SignIn.RequireConfirmedEmail = false;
 .AddEntityFrameworkStores<MeetingsDBContext>()
 .AddSignInManager()
 .AddDefaultTokenProviders();
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+});
 
 var jwt = builder.Configuration.GetSection("Jwt");
 

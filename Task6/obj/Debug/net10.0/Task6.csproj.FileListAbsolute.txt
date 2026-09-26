@@ -169,3 +169,5 @@ D:\Rider\Task6\Task6\obj\Debug\net10.0\Task6.xml
 D:\Rider\Task6\Task6\obj\Debug\net10.0\Task6.pdb
 D:\Rider\Task6\Task6\obj\Debug\net10.0\Task6.genruntimeconfig.cache
 D:\Rider\Task6\Task6\obj\Debug\net10.0\ref\Task6.dll
+D:\Rider\Task6\Task6\bin\Debug\net10.0\MediatR.dll
+D:\Rider\Task6\Task6\bin\Debug\net10.0\MediatR.Contracts.dll
