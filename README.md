@@ -30,16 +30,7 @@ The application includes user registration,role-based authorization, file upload
 
 
 
-
-
-
-
-
-
-
-
-
-
+=====Suomeksi======
 
 
 Tämä on oppimisprojekti, jossa toteutin täysiverisen tapaamisten hallintajärjestelmän.
