@@ -19,17 +19,18 @@ public class MeetingService(
     IFileStorageService fileStorageService,
     IFileUrlBuilder fileUrlBuilder,
     ICurrentUserService currentUserService
-    ) : IMeetingService
+) : IMeetingService
 {
-    private readonly string AttachmentFolder = "MeetingAttachments";
-    
+    private readonly string AttachmentFolder = "MeetingFiles";
+
     public async Task<PagedResult<MeetingDetail>>? GetMeetingsAsync([FromQuery] MeetingQueryParameters qp)
     {
-        var query =  context.Meetings.AsNoTracking()
-            .ApplyFilters(qp)
-            .ApplySort(qp)
+        var query = context.Meetings.AsNoTracking()
+                .ApplyFilters(qp)
+                .ApplySort(qp)
             ;
-        var dto = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, mapper.ConfigurationProvider);
+        var dto = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size,
+            mapper.ConfigurationProvider);
         return dto;
     }
 
@@ -41,14 +42,14 @@ public class MeetingService(
         meeting.Description = meetingCreate.Description;
         meeting.AdminId = currentUserService.UserId;
         context.Meetings.Add(meeting);
-        
+
         await context.SaveChangesAsync();
-    
+
         var final_res = await context.Meetings.Include(m => m.MeetingParticipants)
-            .ThenInclude(mp => mp.UserProfile)
-            .ThenInclude(mp => mp.User)
-            .Include(m => m.Admin)
-            .FirstOrDefaultAsync(m => m.Id == meeting.Id)
+                .ThenInclude(mp => mp.UserProfile)
+                .ThenInclude(mp => mp.User)
+                .Include(m => m.Admin)
+                .FirstOrDefaultAsync(m => m.Id == meeting.Id)
             ;
         return mapper.Map<MeetingDetail>(final_res);
 
@@ -60,7 +61,8 @@ public class MeetingService(
             .ApplyFilters(qp)
             .ApplySort(qp);
 
-        var res = await query.ToPagedResultAsync<Meeting,MeetingDetail>(qp.Page, qp.Size, mapper.ConfigurationProvider);
+        var res = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size,
+            mapper.ConfigurationProvider);
         return res;
     }
 
@@ -70,7 +72,8 @@ public class MeetingService(
             .ApplyFilters(qp)
             .ApplySort(qp);
 
-        var res = await query.ToPagedResultAsync<Meeting,  MeetingDetail>(qp.Page, qp.Size, mapper.ConfigurationProvider);
+        var res = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size,
+            mapper.ConfigurationProvider);
         return res;
 
     }
@@ -83,7 +86,8 @@ public class MeetingService(
             .ApplyFilters(qp)
             .ApplySort(qp);
 
-        var res = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size, mapper.ConfigurationProvider);
+        var res = await query.ToPagedResultAsync<Meeting, MeetingDetail>(qp.Page, qp.Size,
+            mapper.ConfigurationProvider);
         return res;
     }
 
@@ -94,17 +98,18 @@ public class MeetingService(
         {
             return null;
         }
+
         meeting.Title = meetingUpdate.Title;
         meeting.Description = meetingUpdate.Description;
         meeting.StartTime = meetingUpdate.StartTime;
         meeting.UpdatedAt = DateTime.UtcNow;
         await context.SaveChangesAsync();
-        return  mapper.Map<MeetingDetail>(meeting);
+        return mapper.Map<MeetingDetail>(meeting);
 
 
 
 
-}
+    }
 
     public async Task<MeetingDetail?> DeleteMeetingAsync(int id)
     {
@@ -136,6 +141,7 @@ public class MeetingService(
         {
             return mapper.Map<MeetingDetail>(meet);
         }
+
         return null;
     }
 
@@ -143,7 +149,7 @@ public class MeetingService(
     {
         var meeting = await context.Meetings.FirstOrDefaultAsync(m => m.Id == id);
         if (meeting == null) return null;
-        
+
         MeetingAttachment meetingAttachment = new MeetingAttachment();
         meetingAttachment.MeetingId = id;
         meetingAttachment.OriginalName = file.FileName;
@@ -152,20 +158,49 @@ public class MeetingService(
         if (meeting.FileName != null)
         {
             fileStorageService.Delete("MeetingFiles", meeting.FileName, FileVisibility.Public);
-        }    
+        }
+
         meeting.FileName = fileName.FileName;
         meetingAttachment.StoredFileName = meeting.FileName;
         meetingAttachment.UploadedAtUtc = DateTime.UtcNow;
         context.MeetingAttachments.Add(meetingAttachment);
-        
+
         await context.SaveChangesAsync();
-        
+
         var dto = mapper.Map<MeetingDetail>(meeting);
-        dto.Filename = fileUrlBuilder.PublicUrl(meeting.FileName, "MeetingFiles");;
-        
+        dto.Filename = fileUrlBuilder.PublicUrl(meeting.FileName, "MeetingFiles");
+        ;
+
         return dto;
     }
-    public async Task<int?> AddAttachmentAsync(int meetingId, IFormFile file, CancellationToken ct = default)
+
+    public async Task<string?> RemoveFileAsync(int id)
+    {
+        var attachment = await context.MeetingAttachments.FirstOrDefaultAsync(m => m.Id == id);
+        if (attachment == null)
+        {
+            return "Attachment not found";
+        }
+
+        string? user_id = currentUserService.UserId;
+        if (user_id == null)
+        {
+            return "Unauthorize eror. Current user not found!";
+        }
+        var meeting = context.Meetings.FirstOrDefault(m => m.Id == attachment.MeetingId);
+        if (meeting.AdminId != user_id)
+        {
+            return "You do not have permission to delete this meeting attachment!";
+        }
+        context.MeetingAttachments.Remove(attachment);
+        fileStorageService.Delete("MeetingFiles", attachment.StoredFileName, FileVisibility.Public);
+        meeting.FileName = null;
+        await context.SaveChangesAsync();
+        return null;
+
+    }
+    
+public async Task<int?> AddAttachmentAsync(int meetingId, IFormFile file, CancellationToken ct = default)
     {
         if (FileValidators.ValidateFile(file, file.Length) != null)
         {

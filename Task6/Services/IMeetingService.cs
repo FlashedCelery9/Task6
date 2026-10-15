@@ -20,4 +20,5 @@ public interface IMeetingService
     Task<MeetingDetail?> UploadFileAsync(int id, IFormFile file);
     Task<int?> AddAttachmentAsync(int meetingId, IFormFile file, CancellationToken ct = default);
     Task<FileDownload?> GetAttachmentAsync(int attachmentId, CancellationToken ct = default);
+    Task<string?> RemoveFileAsync(int id);
 }

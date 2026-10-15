@@ -1,12 +1,18 @@
-﻿namespace Task6.Services;
+﻿using Microsoft.Extensions.Options;
+using Task6.Configuration;
+
+namespace Task6.Services;
 
 public class FileUrlBuilder : IFileUrlBuilder
 {
-    private const string PublicBasePath = "/uploads";  
-    private readonly IHttpContextAccessor _httpContextAccessor;  
+    private readonly string PublicBasePath;  
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly FileStorageOptions _options;
     
-    public FileUrlBuilder(IHttpContextAccessor accessor)  
+    public FileUrlBuilder(IHttpContextAccessor accessor, IOptions<FileStorageOptions> options, IWebHostEnvironment env)
     {
+        _options = options.Value;
+        PublicBasePath = string.Join("/", options.Value.public_root);
         _httpContextAccessor = accessor;  
     }  
     // public files  
@@ -16,7 +22,7 @@ public class FileUrlBuilder : IFileUrlBuilder
         var scheme = request.Scheme; // http  
         var host = request.Host; // localhost:5293  
   
-        return $"{scheme}://{host}{PublicBasePath}/{folder}/{fileName}";  
+        return $"{scheme}://{host}/{PublicBasePath}/{folder}/{fileName}";  
     }  
   
   

@@ -2,5 +2,9 @@
 
 public class MeetingsOptions
 {
+    public const string SectionName = "MeetingOptions";
     
+    public int defaultPageSize { get; set; }
+    public int defaultPageNumber { get; set; }
+
 }

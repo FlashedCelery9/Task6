@@ -54,6 +54,21 @@ public class MeetingController(MeetingsDBContext _context,
         return StatusCode(StatusCodes.Status201Created, dto);  
     }
 
+    [HttpDelete("delete_attachments/{id:int}")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult>? DeletePublicFileAsync([FromRoute] int id)
+    {
+        var res = await _meetingService.RemoveFileAsync(id);
+        if (res == null)
+        {
+            return Ok("Attachment deleted!");
+        }
+
+        return BadRequest(res);
+    }
     /// <summary>
     /// Get all DetailMeetings
     /// </summary>

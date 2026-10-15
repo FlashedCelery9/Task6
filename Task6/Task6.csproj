@@ -39,8 +39,9 @@
 
     <ItemGroup>
       <Folder Include="App_Data\uploads\" />
+      <Folder Include="DevUploads\SecondFolder\MeetingFiles\" />
+      <Folder Include="NewUploads\SecondFolder\MeetingFiles\" />
       <Folder Include="Services\Permisions\" />
-      <Folder Include="uploads\" />
     </ItemGroup>
 
 </Project>

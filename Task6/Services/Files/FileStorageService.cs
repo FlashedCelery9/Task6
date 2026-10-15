@@ -68,7 +68,7 @@ public class FileStorageService : IFileStorageService
 
     public Task<FileDownload?> OpenRead(string folder, string fileName, FileVisibility visibility)
     {
-        var safeName = Path.GetFileName(fileName);
+        var safeName = Path.GetFileName(fileName); //Захищає від надсилання шляхів через які користувач міг би дістати файли які непотрібно
         var fullPath = Path.Combine(RootFor(visibility), folder, safeName);
 
         if (!File.Exists(fullPath)) return Task.FromResult<FileDownload?>(null);

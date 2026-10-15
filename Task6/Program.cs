@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Task6.Configuration;
 using Task6.data;
 using Task6.Filters;
 using Task6.midleware;
@@ -28,10 +29,13 @@ builder.Services.AddDbContext<MeetingsDBContext>(options => options.
 UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 builder.Services.AddHttpContextAccessor();// НЕ ЗАБУТИ
+//Configure
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection(FileStorageOptions.SectionName));
 //Services
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
 builder.Services.AddScoped<RoleService>();
-builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<IFileStorageService, OptionalFileStrorageService>();
 builder.Services.AddScoped<OldUsersService>();
 builder.Services.AddSingleton<IFileUrlBuilder, FileUrlBuilder>(); //ТУТ!!!!!
 builder.Services.AddScoped<IMeetingService, MeetingService>();
@@ -79,14 +83,15 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 {
 options.SignIn.RequireConfirmedEmail = false;
 })
-.AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<MeetingsDBContext>()
-.AddSignInManager()
-.AddDefaultTokenProviders();
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<MeetingsDBContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
 });
+
 
 var jwt = builder.Configuration.GetSection("Jwt");
 
@@ -157,13 +162,35 @@ app.UseAuthentication(); // ← хто ти? заповнює HttpContext.User
 app.UseAuthorization();
 
 
-app.UseStaticFiles(new StaticFileOptions 
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "uploads")
-    ),
-    RequestPath = "/uploads"
-});
+//USER STATIC FILES!!! Треба щось з цим зробити!!!!!=================================================================
+    // 1. Отримуємо масив папок із вашої конфігурації FileStorageOptions
+    var fileStorageOptions = builder.Configuration
+        .GetSection(FileStorageOptions.SectionName) // Змініть назву секції на вашу, якщо вона інша
+        .Get<FileStorageOptions>();
+
+    if (fileStorageOptions?.public_root != null)
+    {
+        var parts = new List<string> { builder.Environment.ContentRootPath };
+
+        if (fileStorageOptions.public_root.Count == 0)
+        {
+            parts.Add("PublicFolder"); // DEFAULT PUBLIC FOLDER 
+        }
+        // 2. Збираємо повний фізичний шлях на диску (корінь + усі вкладені папки)
+        parts.AddRange(fileStorageOptions.public_root);
+        string fullPhysicalPath = Path.Combine(parts.ToArray());
+
+        // 3. Формуємо відносний веб-шлях для браузера (наприклад, /DevUploads/SecondFolder)
+        string webRequestPath = "/" + string.Join("/", fileStorageOptions.public_root);
+
+        // 4. Реєструємо статичні файли в конфігурації сервера
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(fullPhysicalPath),
+            RequestPath = webRequestPath
+        });
+    }
+
 // app.UseMiddleware<Midleware>(); //MidleWare Homework
 
 
